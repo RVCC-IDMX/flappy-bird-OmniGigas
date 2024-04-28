@@ -13,7 +13,10 @@ loadSound("jump", "sounds/jump.mp3");
 loadSound("bruh", "sounds/bruh.mp3");
 loadSound("pass", "sounds/pass.mp3");
 
-screen("game", () => {
+let highScore = 0;
+
+// Game scene
+scene("game", () => {
 	const PIPE_GAP = 140;
 	let score = 0;
 	setGravity(1600);
@@ -35,8 +38,83 @@ screen("game", () => {
 		body(),
 	]);
 
+	function createPipes() {
+		const offset = rand(-50, 50);
+		// bottom pipe
+		add([
+			sprite("pipe"),
+			pos(width(), height() / 2 + offset + PIPE_GAP / 2),
+			"pipe",
+			scale(2),
+			area(),
+			{ passed: false},
+		]);
+
+		// top pipe
+		add([
+			sprite("pipe", {flipY: true}),
+			pos(width(), height() / 2 + offset - PIPE_GAP / 2),
+			"pipe",
+			anchor("botleft"),
+			scale(2),
+			area(),
+		])
+	}
+
+	loop(1.5, () => createPipes());
+
+	onUpdate("pipe", (pipe) => {
+		pipe.move(-300, 0);
+
+		if(pipe.passed === false && pipe.pos.x < player.pos.x) {
+			pipe.passed = true;
+			score += 1;
+			scoreText.text = score;
+			play("pass");
+			}
+		});
+
+	player.onCollide("pipe", () => {
+		const ss = screenshot();
+		go("gameover", score, ss);
+	})
+
+	player.onUpdate(() => {
+		if (player.pos.y > height()) {
+			const ss = screenshot();
+			go("gameover", score, ss);
+		}
+	})
+
+	onKeyPress("space", () => {
+		play("jump");
+		player.jump(400);
+	});
+
+	window.addEventListener("touchstart", () => {
+		play("jump");
+		player.jump(400);
+	});
+
 });
 
-scene("gameover", () => {});
+// Game over scene
+scene("gameover", (score, screenshot) => {
+	if (score > highScore) highScore = score;
+
+	play("bruh");
+
+	loadSprite("gameOverScreen", screenshot);
+	add([sprite("gameOverScreen", { width: width(), height: height() })]);
+
+	add([
+		text("gameover!\n" + "score: " + score, { size: 45}),
+		pos(width() / 2, height() / 3),
+	])
+
+	onKeyPress("space", () => {
+		go("game");
+	})
+});
 
 go("game");
