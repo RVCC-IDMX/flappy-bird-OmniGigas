@@ -68,7 +68,7 @@ scene("game", () => {
 
 		if(pipe.passed === false && pipe.pos.x < player.pos.x) {
 			pipe.passed = true;
-			score += 1;
+			score += 100;
 			scoreText.text = score;
 			play("pass");
 			}
